@@ -9,7 +9,7 @@ namespace Mike.QuickMP
     /// Player manager.
     /// Handles fire Input and Beams.
     /// </summary>
-    public class PlayerManager : Photon.PunBehaviour
+    public class PlayerManager : Photon.PunBehaviour, IPunObservable
     {
 
         #region Public Variables
@@ -19,6 +19,12 @@ namespace Mike.QuickMP
 
         [Tooltip("The current Health of our player")]
         public float Health = 1f;
+
+        [Tooltip("The local player instance. Use this to know if the local player is represented in the Scene")]
+        public static GameObject LocalPlayerInstance;
+
+        [Tooltip("The Player's UI GameObject Prefab")]
+        public GameObject PlayerUiPrefab;
 
         #endregion
 
@@ -45,6 +51,57 @@ namespace Mike.QuickMP
                 Beams.SetActive(false);
             }
 
+            // #Important
+            // used in GameManager.cs: we keep track of the localPlayer instance to prevent instantiation when levels are synchronized
+            if (photonView.isMine)
+            {
+                PlayerManager.LocalPlayerInstance = this.gameObject;
+            }
+            // #Critical
+            // we flag as don't destroy on load so that instance survives level synchronization, thus giving a seamless experience when levels load.
+            DontDestroyOnLoad(this.gameObject);
+
+        }
+
+        /// <summary>
+        /// MonoBehaviour method called on GameObject by Unity during initialization phase.
+        /// </summary>
+        void Start()
+        {
+            CameraWork _cameraWork = this.gameObject.GetComponent<CameraWork>();
+
+            //Debug.Log(this.gameObject.GetComponent<CameraWork>());
+
+            if (_cameraWork != null)
+            {
+                if (photonView.isMine)
+                {
+                    _cameraWork.OnStartFollowing();
+                }
+            }
+            else
+            {
+                Debug.LogError("<Color=Red><a>Missing</a></Color> CameraWork Component on playerPrefab.", this);
+            }
+
+            #if UNITY_5_4_OR_NEWER
+                // Unity 5.4 has a new scene management. register a method to call CalledOnLevelWasLoaded.
+                UnityEngine.SceneManagement.SceneManager.sceneLoaded += (scene, loadingMode) =>
+                {
+                    this.CalledOnLevelWasLoaded(scene.buildIndex);
+                };
+            #endif
+
+            if (PlayerUiPrefab != null)
+            {
+                GameObject _uiGo = Instantiate(PlayerUiPrefab) as GameObject;
+                _uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+            }
+            else
+            {
+                Debug.LogWarning("<Color=Red><a>Missing</a></Color> PlayerUiPrefab reference on player Prefab.", this);
+            }
+
         }
 
         /// <summary>
@@ -52,7 +109,10 @@ namespace Mike.QuickMP
         /// </summary>
         void Update()
         {
-            ProcessInputs();
+            if (photonView.isMine)
+            {
+                ProcessInputs();
+            }
 
             // trigger Beams active state
             if (Beams != null && IsFiring != Beams.GetActive())
@@ -122,6 +182,26 @@ namespace Mike.QuickMP
             Health -= 0.1f * Time.deltaTime;
         }
 
+        #if !UNITY_5_4_OR_NEWER
+        /// <summary>See CalledOnLevelWasLoaded. Outdated in Unity 5.4.</summary>
+        void OnLevelWasLoaded(int level)
+        {
+           this.CalledOnLevelWasLoaded(level);
+        }
+        #endif
+
+        void CalledOnLevelWasLoaded(int level)
+        {
+            // check if we are outside the Arena and if it's the case, spawn around the center of the arena in a safe zone
+            if (!Physics.Raycast(transform.position, -Vector3.up, 5f))
+            {
+                transform.position = new Vector3(0f, 5f, 0f);
+            }
+
+            GameObject _uiGo = Instantiate(this.PlayerUiPrefab) as GameObject;
+            _uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+        }
+
         #endregion
 
         #region Custom
@@ -146,6 +226,22 @@ namespace Mike.QuickMP
                 {
                     IsFiring = false;
                 }
+            }
+        }
+
+        void IPunObservable.OnPhotonSerializeView(PhotonStream stream, PhotonMessageInfo info)
+        {
+            if (stream.isWriting)
+            {
+                // We own this player: send the others our data
+                stream.SendNext(IsFiring);
+                stream.SendNext(Health);
+            }
+            else
+            {
+                // Network player, receive data
+                this.IsFiring = (bool)stream.ReceiveNext();
+                this.Health = (float)stream.ReceiveNext();
             }
         }
         #endregion

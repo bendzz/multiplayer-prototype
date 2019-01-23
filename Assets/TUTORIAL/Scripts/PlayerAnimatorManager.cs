@@ -4,7 +4,7 @@ using System.Collections;
 
 namespace Mike.QuickMP
 {
-    public class PlayerAnimatorManager : MonoBehaviour
+    public class PlayerAnimatorManager : Photon.MonoBehaviour
     {
         #region PUBLIC PROPERTIES
         public float DirectionDampTime = .25f;
@@ -30,6 +30,11 @@ namespace Mike.QuickMP
         // Update is called once per frame
         void Update()
         {
+            if (photonView.isMine == false && PhotonNetwork.connected == true)
+            {
+                return;
+            }
+
             if (!animator)
             {
                 return;

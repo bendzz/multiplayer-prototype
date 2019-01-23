@@ -2,7 +2,7 @@
 using System.Collections;
 
 
-namespace Com.MyCompany.MyGame
+namespace Mike.QuickMP
 {
     /// <summary>
     /// Camera work. Follow a target
