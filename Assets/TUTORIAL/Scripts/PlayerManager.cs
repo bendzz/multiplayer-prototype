@@ -26,12 +26,17 @@ namespace Mike.QuickMP
         [Tooltip("The Player's UI GameObject Prefab")]
         public GameObject PlayerUiPrefab;
 
+        [Tooltip("Damage applied on eye beam hit and per second in the beam")]
+        public float beamDamage = 0.3f;
+
         #endregion
 
         #region Private Variables
 
         //True, when the user is firing
         bool IsFiring;
+
+        GameObject uiRef;
 
         #endregion
 
@@ -77,6 +82,7 @@ namespace Mike.QuickMP
                 if (photonView.isMine)
                 {
                     _cameraWork.OnStartFollowing();
+                    //Debug.Log("playermanager _cameraWork.OnStartFollowing()");
                 }
             }
             else
@@ -124,6 +130,17 @@ namespace Mike.QuickMP
             {
                 GameManager.Instance.LeaveRoom();
             }
+
+            if (!uiRef)
+            {
+
+                //GameObject _uiGo = Instantiate(this.PlayerUiPrefab) as GameObject;
+                //_uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+
+                uiRef = Instantiate(this.PlayerUiPrefab) as GameObject;
+                uiRef.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+                Debug.Log("Spawned new player UI");
+            }
         }
 
         /// <summary>
@@ -150,7 +167,7 @@ namespace Mike.QuickMP
             }
 
 
-            Health -= 0.1f;
+            Health -= beamDamage;
         }
 
 
@@ -179,7 +196,7 @@ namespace Mike.QuickMP
 
 
             // we slowly affect health when beam is constantly hitting us, so player has to move to prevent death.
-            Health -= 0.1f * Time.deltaTime;
+            Health -= beamDamage * Time.deltaTime;
         }
 
         #if !UNITY_5_4_OR_NEWER
@@ -198,8 +215,10 @@ namespace Mike.QuickMP
                 transform.position = new Vector3(0f, 5f, 0f);
             }
 
-            GameObject _uiGo = Instantiate(this.PlayerUiPrefab) as GameObject;
-            _uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+            //GameObject _uiGo = Instantiate(this.PlayerUiPrefab) as GameObject;
+            //_uiGo.SendMessage("SetTarget", this, SendMessageOptions.RequireReceiver);
+
+            //Debug.Log("playermanager CalledOnLevelWasLoaded  - Instantiate(this.PlayerUiPrefab)");
         }
 
         #endregion
@@ -242,6 +261,7 @@ namespace Mike.QuickMP
                 // Network player, receive data
                 this.IsFiring = (bool)stream.ReceiveNext();
                 this.Health = (float)stream.ReceiveNext();
+                Debug.Log("this.IsFiring " + this.IsFiring + " this.Health " + this.Health);
             }
         }
         #endregion

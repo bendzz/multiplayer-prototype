@@ -15,6 +15,7 @@ namespace Mike.QuickMP
 
         // Store the PlayerPref Key to avoid typos
         static string playerNamePrefKey = "PlayerName";
+        InputField _inputField;
 
         #endregion
 
@@ -28,15 +29,16 @@ namespace Mike.QuickMP
         {
 
             string defaultName = "";
-            InputField _inputField = this.GetComponent<InputField>();
-            if (_inputField != null)
-            {
+            //InputField _inputField = this.GetComponent<InputField>();
+            _inputField = this.GetComponent<InputField>();
+            //if (_inputField != null)
+            //{
                 if (PlayerPrefs.HasKey(playerNamePrefKey))
                 {
                     defaultName = PlayerPrefs.GetString(playerNamePrefKey);
                     _inputField.text = defaultName;
                 }
-            }
+            //}
 
 
             PhotonNetwork.playerName = defaultName;
@@ -56,15 +58,21 @@ namespace Mike.QuickMP
         //public void SetPlayerName(string value)
         public void SetPlayerName(InputField value)
         {
-            // #Important
-            PhotonNetwork.playerName = value + " "; // force a trailing space string in case value is an empty string, else playerName would not be updated.
+            //Note: 'value' not used
 
+            string input = _inputField.text;
+
+            // #Important
+            //PhotonNetwork.playerName = value + " "; // force a trailing space string in case value is an empty string, else playerName would not be updated.
 
             //PlayerPrefs.SetString(playerNamePrefKey, value);
-            PlayerPrefs.SetString(playerNamePrefKey, value.text);
+            //PlayerPrefs.SetString(playerNamePrefKey, value.text);
 
             // had to rewrite this function using this https://www.reddit.com/r/Unity3D/comments/66jc06/how_to_get_inputfield_value/dgjc1nc/  didn't get any text using the tutorial's method
             //Debug.Log("name set to " + value.text);
+
+            PhotonNetwork.playerName = input + " "; // force a trailing space string in case value is an empty string, else playerName would not be updated.
+            PlayerPrefs.SetString(playerNamePrefKey, input);
         }
 
 

@@ -510,6 +510,7 @@ MonoBehaviour:
   Health: 1
   PlayerUiPrefab: {fileID: 75590462273839791, guid: 19364285d968cc2428ee64aa92d2990e,
     type: 3}
+  beamDamage: 0.3
 --- !u!114 &545451838019409913
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -555,7 +556,7 @@ MonoBehaviour:
   height: 3
   heightSmoothLag: 0.3
   centerOffset: {x: 0, y: 4, z: 0}
-  followOnStart: 1
+  followOnStart: 0
 --- !u!1 &618935760704755263
 GameObject:
   m_ObjectHideFlags: 0
