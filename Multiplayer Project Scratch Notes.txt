@@ -1,0 +1,59 @@
+MULTIPLAYER
+
+TODO: 
+-display ping using PUN commands
+-speed up the tick rate to 20 hz
+
+-For characters, send commands instead of velocity, and sim the commands on the receiving client
+
+Position correcting:
+-How do I compensate for a position update being off because of inconsistent latency between updates? It makes the characters seem jerky.
+	-One idea: Cache the previous frame positions and figure out the deviation of the update from the appropriate past state, then correct for that
+	-Smooth over 100ms like valve does, instead of from 1 frame to 1 frame https://developer.valvesoftware.com/wiki/Source_Multiplayer_Networking#Lag_compensation
+
+TIME SYNCHING
+- is there an NTP function in PUN? https://en.wikipedia.org/wiki/Network_Time_Protocol
+	-https://forum.photonengine.com/discussion/10387/how-can-i-get-room-creation-time yep
+-Here's a whole page on the subject https://doc.photonengine.com/en-us/pun/current/demos-and-tutorials/lagcompensation
+	>float lag = Mathf.Abs((float) (PhotonNetwork.time - info.timestamp));
+
+HIT VERIFYING
+-BF3/Valve method (simplified): Let the shooter determine the hit, but check on receiver's end if the hit was viable (ie if they reasonably got to cover in time)
+
+-Can I make melea/smash and shooter/cover hit determinations feel better by focusing on the reflexes and skill of each player on their own systems and comparing those more directly? 
+	-Doing hit determination sender side means lots of dodged hits will connect. Doing it receiver side means that often when the sender Sees a hit connect, it won'that
+	-Maybe I can visualize the amount of latency in the game and an confusion zone, like a sphere of where the opponent might possibly be at this moment on their system, and factor that into the gameplay?
+		-so the higher the total ping, the larger the latency between an opponent making a move and you seeing it, the larger the circle of confusion
+	-
+
+	
+Solutions:
+-Have all clients predict a bit into the future what other clients are doing?
+	-if the prediction time were equal to the latency of each client from the server, they'd appear to be running at the same time on eacn others machines
+	-problem: The predictions will be simplistic extrapolations, they won't show the other player responding to new information (or any unpredictable or even Different inputs given)
+
+	
+Peer to Peer:
+	-Lower latency, but higher traffic
+	-Here was the first version I tried but it's too niche (requires special server types)
+	https://www.reddit.com/r/Unity3D/comments/61wkvf/heres_a_tutorial_on_how_to_do_free_peer_to_peer/
+	https://assetstore.unity.com/packages/tools/network/webrtc-network-47846
+	-Requires NAT traversal (getting through the router), so players can talk to each other
+	-Port forwarding is free, NAT punchthrough is more complex and the unitystore asset costs $65
+	https://forum.unity.com/threads/nat-traversal-automatic-port-forwarding-punch-through-and-more.395835/
+
+NOTES:
+-Look out for 'super bullets', ie 2 bullets arriving on one network update https://www.blurbusters.com/network-lag/
+
+
+GAMEPLAY
+-Make the jump multi-phase; you start by going up at a set, super fast speed, then you reach the top and it arcs, then you start falling and quickly reach your maximum fall speed
+	-less time spent accelerating/arcing means less nausea to VR players
+	
+
+
+
+
+
+
+
